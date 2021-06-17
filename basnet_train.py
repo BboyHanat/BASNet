@@ -114,6 +114,7 @@ ite_num = 0
 running_loss = 0.0
 running_tar_loss = 0.0
 ite_num4val = 0
+train_step_one_epoch = train_num // batch_size_train
 writer = SummaryWriter(comment=f'LR_{0.001}_BS_{batch_size_train}')
 for epoch in range(0, epoch_num):
     net.train()
@@ -133,7 +134,7 @@ for epoch in range(0, epoch_num):
                                                                                         requires_grad=False)
         else:
             inputs_v, labels_v = Variable(inputs, requires_grad=False), Variable(labels, requires_grad=False)
-        global_step = epoch*i
+        global_step = epoch * train_step_one_epoch + i
         # y zero the parameter gradients
         optimizer.zero_grad()
         # forward + backward + optimize
