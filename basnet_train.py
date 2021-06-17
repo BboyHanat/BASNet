@@ -106,7 +106,7 @@ if torch.cuda.is_available():
 
 # ------- 4. define optimizer --------
 print("---define optimizer...")
-optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+optimizer = optim.Adam(net.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
 
 # ------- 5. training process --------
 print("---start training...")
@@ -136,10 +136,6 @@ for epoch in range(0, epoch_num):
         global_step = epoch*i
         # y zero the parameter gradients
         optimizer.zero_grad()
-        writer.add_images('masks/true', labels, global_step)
-        writer.add_images('masks/pred_d0', torch.sigmoid(d0), global_step)
-        writer.add_images('masks/pred_d1', torch.sigmoid(d1), global_step)
-        writer.add_images('masks/pred_d2', torch.sigmoid(d2), global_step)
         # forward + backward + optimize
         d0, d1, d2, d3, d4, d5, d6, d7 = net(inputs_v)
         loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
@@ -151,6 +147,11 @@ for epoch in range(0, epoch_num):
         running_loss += loss.item()
         running_tar_loss += loss2.item()
 
+        writer.add_images('images', inputs, global_step)
+        writer.add_images('masks/true', labels, global_step)
+        writer.add_images('masks/pred_d0', torch.sigmoid(d0), global_step)
+        writer.add_images('masks/pred_d1', torch.sigmoid(d1), global_step)
+        writer.add_images('masks/pred_d2', torch.sigmoid(d2), global_step)
         # del temporary outputs and loss
         del d0, d1, d2, d3, d4, d5, d6, d7, loss2, loss
 
