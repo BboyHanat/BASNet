@@ -15,7 +15,7 @@ import cv2
 
 
 class SalObjDatasetNew(Dataset):
-    def __init__(self, img_name_list, lbl_name_list, size_wh):
+    def __init__(self, img_name_list, lbl_name_list, size_wh=(1280, 640)):
         self.image_name_list = img_name_list
         self.label_name_list = lbl_name_list
         self.transform_image = transforms.Compose(
