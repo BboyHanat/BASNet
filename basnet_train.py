@@ -67,9 +67,9 @@ def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v):
 
 # ------- 2. set the directory of training dataset --------
 
-data_dir = './train_data/'
-tra_image_dir = './dataset/images/training/'
-tra_label_dir = './dataset/annotations/training/'
+data_dir = './dataset/'
+tra_image_dir = 'images/training/'
+tra_label_dir = 'annotations/training/'
 
 image_ext = '.jpg'
 label_ext = '.png'
@@ -88,14 +88,8 @@ tra_img_name_list = glob.glob(data_dir + tra_image_dir + '*' + image_ext)
 tra_lbl_name_list = []
 for img_path in tra_img_name_list:
     img_name = img_path.split("/")[-1]
-
-    aaa = img_name.split(".")
-    bbb = aaa[0:-1]
-    imidx = bbb[0]
-    for i in range(1, len(bbb)):
-        imidx = imidx + "." + bbb[i]
-
-    tra_lbl_name_list.append(data_dir + tra_label_dir + imidx + label_ext)
+    bbb = img_name.replace(image_ext, label_ext)
+    tra_lbl_name_list.append(data_dir + tra_label_dir + bbb)
 
 print("---")
 print("train images: ", len(tra_img_name_list))
@@ -111,7 +105,8 @@ salobj_dataset = SalObjDataset(
         RescaleT(256),
         RandomCrop(224),
         ToTensorLab(flag=0)]))
-salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuffle=True, num_workers=1)
+
+salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuffle=True, num_workers=4)
 
 # ------- 3. define model --------
 # define the net
