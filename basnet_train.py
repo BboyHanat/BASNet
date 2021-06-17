@@ -14,13 +14,7 @@ import torchvision.transforms as standard_transforms
 import numpy as np
 import glob
 
-from data_loader import Rescale
-from data_loader import RescaleT
-from data_loader import RandomCrop
-from data_loader import CenterCrop
-from data_loader import ToTensor
-from data_loader import ToTensorLab
-from data_loader import SalObjDataset
+from data_loader_custom import SalObjDatasetNew
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -100,13 +94,9 @@ print("---")
 
 train_num = len(tra_img_name_list)
 
-salobj_dataset = SalObjDataset(
+salobj_dataset = SalObjDatasetNew(
     img_name_list=tra_img_name_list,
-    lbl_name_list=tra_lbl_name_list,
-    transform=transforms.Compose([
-        RescaleT(256),
-        RandomCrop(224),
-        ToTensorLab(flag=0)]))
+    lbl_name_list=tra_lbl_name_list,)
 
 salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuffle=True, num_workers=4)
 
