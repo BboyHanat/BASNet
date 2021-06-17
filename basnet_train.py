@@ -114,7 +114,7 @@ ite_num = 0
 running_loss = 0.0
 running_tar_loss = 0.0
 ite_num4val = 0
-
+writer = SummaryWriter(comment=f'LR_{0.001}_BS_{batch_size_train}')
 for epoch in range(0, epoch_num):
     net.train()
 
@@ -133,10 +133,13 @@ for epoch in range(0, epoch_num):
                                                                                         requires_grad=False)
         else:
             inputs_v, labels_v = Variable(inputs, requires_grad=False), Variable(labels, requires_grad=False)
-
+        global_step = epoch*i
         # y zero the parameter gradients
         optimizer.zero_grad()
-
+        writer.add_images('masks/true', labels, global_step)
+        writer.add_images('masks/pred_d0', torch.sigmoid(d0), global_step)
+        writer.add_images('masks/pred_d1', torch.sigmoid(d1), global_step)
+        writer.add_images('masks/pred_d2', torch.sigmoid(d2), global_step)
         # forward + backward + optimize
         d0, d1, d2, d3, d4, d5, d6, d7 = net(inputs_v)
         loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
