@@ -157,8 +157,8 @@ for epoch in range(0, epoch_num):
         optimizer.step()
 
         # # print statistics
-        running_loss += loss.data[0]
-        running_tar_loss += loss2.data[0]
+        running_loss += loss.item()
+        running_tar_loss += loss2.item()
 
         # del temporary outputs and loss
         del d0, d1, d2, d3, d4, d5, d6, d7, loss2, loss
