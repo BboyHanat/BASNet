@@ -68,7 +68,7 @@ class SalObjDatasetNew(Dataset):
         torch.manual_seed(seed)
         label_tensor = self.transform_label(label_tensor)
 
-        return {image_tensor, label_tensor}
+        return image_tensor, label_tensor
 
     def __len__(self):
         return len(self.image_name_list)
