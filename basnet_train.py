@@ -101,6 +101,9 @@ salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuf
 # ------- 3. define model --------
 # define the net
 net = BASNet(3, 1)
+
+# fine-tuning
+net.load_state_dict(torch.load(model_dir, map_location='cpu'))
 if torch.cuda.is_available():
     net.cuda()
 

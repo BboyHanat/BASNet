@@ -14,6 +14,30 @@ from PIL import Image
 import cv2
 
 
+class SalObjDatasetTest(Dataset):
+    def __init__(self, img_name_list, size_wh=(1280, 640)):
+        self.image_name_list = img_name_list
+        self.transform_image = transforms.Compose(
+            [
+                transforms.Resize(size=(size_wh[1], size_wh[0]), interpolation=Image.BILINEAR),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
+
+    def __getitem__(self, idx):
+        image = cv2.imread(self.image_name_list[idx])
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # to rgb
+        image = np.transpose(image, (2, 0, 1))
+        image = np.asarray(image,  dtype=np.float32) / 255.0
+        image_tensor = torch.from_numpy(image)
+
+        image_tensor = self.transform_image(image_tensor)
+        return image_tensor
+
+    def __len__(self):
+        return len(self.image_name_list)
+
+
 class SalObjDatasetNew(Dataset):
     def __init__(self, img_name_list, lbl_name_list, size_wh=(1280, 640)):
         self.image_name_list = img_name_list
