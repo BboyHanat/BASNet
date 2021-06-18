@@ -70,7 +70,7 @@ tra_label_dir = 'annotations/training/'
 image_ext = '.jpg'
 label_ext = '.png'
 
-model_dir = "./saved_models/basnet_bsi/"
+model_dir = "./saved_models/basnet_bsi_0618/"
 os.makedirs(model_dir, exist_ok=True)
 
 epoch_num = 100000
@@ -103,7 +103,8 @@ salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuf
 net = BASNet(3, 1)
 
 # fine-tuning
-net.load_state_dict(torch.load(model_dir, map_location='cpu'))
+need_ft_model = './saved_models/basnet_bsi/basnet_bsi_itr_24000_train_5.146515_tar_0.597883.pth'
+net.load_state_dict(torch.load(need_ft_model, map_location='cpu'))
 if torch.cuda.is_available():
     net.cuda()
 
