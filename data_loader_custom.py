@@ -45,7 +45,7 @@ class SalObjDatasetNew(Dataset):
         self.transform_image = transforms.Compose(
             [
                 transforms.RandomApply([
-                    # transforms.RandomCrop(size=(1200, 2400)),
+                    transforms.RandomCrop(size=(1200, 2400)),
                     transforms.RandomRotation(10, expand=True, resample=Image.BILINEAR),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomVerticalFlip()],
@@ -61,7 +61,7 @@ class SalObjDatasetNew(Dataset):
         self.transform_label = transforms.Compose(
             [
                 transforms.RandomApply([
-                    # transforms.RandomCrop(size=(1200, 2400)),
+                    transforms.RandomCrop(size=(1200, 2400)),
                     transforms.RandomRotation(10, expand=True, resample=Image.NEAREST),
                     transforms.RandomHorizontalFlip(),
                     transforms.RandomVerticalFlip()],
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         t1 = transforms.Resize(size=(640, 1280), interpolation=Image.BILINEAR)
         # t2 = transforms.RandomCrop(size=(1200, 2400))
         t2 = transforms.RandomApply([
-            # transforms.RandomCrop(size=(1400, 2800)),
+            transforms.RandomCrop(size=(1200, 2400)),
             transforms.RandomRotation(15, expand=True, resample=Image.NEAREST),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
