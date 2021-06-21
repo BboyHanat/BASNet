@@ -124,14 +124,14 @@ salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuf
 net = BASNet(3, 1)
 
 # fine-tuning
-need_ft_model = './saved_models/basnet_bsi/basnet_bsi_itr_4000_train_6.843154_tar_0.833489.pth'
+need_ft_model = './saved_models/basnet_bsi_itr_8000_train_6.803157_tar_0.828863.pth'
 net.load_state_dict(torch.load(need_ft_model, map_location='cpu'))
 if torch.cuda.is_available():
     net.cuda()
 
 # ------- 4. define optimizer --------
 print("---define optimizer...")
-optimizer = optim.Adam(net.parameters(), lr=0.00001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
 
 # ------- 5. training process --------
 print("---start training...")
