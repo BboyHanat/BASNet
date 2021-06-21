@@ -169,12 +169,12 @@ for epoch in range(0, epoch_num):
         loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
         emb_loss = embedding_loss(emb=hd1, labels_v=labels_v)
         b, c, h,  w = labels_v.size()
-        if torch.sum(labels_v.view(b, c, h * w)) > 10000:
-            print("applying")
-            loss_all = loss + emb_loss
-        else:
-            loss_all = loss
-
+        # if torch.sum(labels_v.view(b, c, h * w)) > 10000:
+        #     print("applying")
+        #     loss_all = loss + emb_loss
+        # else:
+        #     loss_all = loss
+        loss_all = emb_loss
         loss_all.backward()
         nn.utils.clip_grad_norm(net.parameters(), max_norm=2, norm_type=2)
         optimizer.step()

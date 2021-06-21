@@ -245,9 +245,10 @@ class BASNet(nn.Module):
         self.outconv3 = nn.Conv2d(128,1,3,padding=1)
         self.outconv2 = nn.Conv2d(64,1,3,padding=1)
         self.outconv1 = nn.Conv2d(64,1,3,padding=1)
-
+        self.outconv1.requires_grad_(False)
         ## -------------Refine Module-------------
         self.refunet = RefUnet(1,64)
+        self.refunet.requires_grad_(False)
 
 
     def forward(self,x):
