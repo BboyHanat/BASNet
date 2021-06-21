@@ -49,11 +49,9 @@ class EmbeddingLoss(nn.Module):
         emb = emb.view(b, -1, h * w)
         fg_emb = torch.sum(emb * labels_v, dim=2) / (torch.sum(labels_v, dim=2) + eps)
         bg_emb = torch.sum(emb * (1 - labels_v), dim=2) / (torch.sum(1 - labels_v, dim=2) + eps)
-        # fg_emb = torch.squeeze(fg_emb)
-        # bg_emb = torch.squeeze(bg_emb)
-        fg_emb_mode = torch.sqrt(torch.bmm(fg_emb, fg_emb.permute(0, 2, 1)))
-        bg_emb_mode = torch.sqrt(torch.bmm(bg_emb, bg_emb.permute(0, 2, 1)))
-        cos_theta = (torch.bmm(fg_emb, bg_emb.permute(0, 2, 1))) / (fg_emb_mode * bg_emb_mode + eps)
+        fg_emb_mode = torch.sqrt(torch.bmm(fg_emb.unsqueeze(dim=1), fg_emb.unsqueeze(dim=2)))
+        bg_emb_mode = torch.sqrt(torch.bmm(bg_emb.unsqueeze(dim=1), bg_emb.unsqueeze(dim=2)))
+        cos_theta = (torch.bmm(fg_emb.unsqueeze(dim=1), bg_emb.unsqueeze(dim=2))) / (fg_emb_mode * bg_emb_mode + eps)
         cos_theta = torch.relu(cos_theta)
         cos_theta = torch.mean(cos_theta) + eps
         return cos_theta
@@ -115,7 +113,7 @@ print("---")
 
 train_num = len(tra_img_name_list)
 
-salobj_dataset = SalObjDatasetNew(tra_img_name_list, tra_lbl_name_list, size_wh=(1024, 512))
+salobj_dataset = SalObjDatasetNew(tra_img_name_list, tra_lbl_name_list, size_wh=(512, 256))
 
 salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuffle=True, num_workers=2)
 
@@ -124,8 +122,8 @@ salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuf
 net = BASNet(3, 1)
 
 # fine-tuning
-need_ft_model = './saved_models/basnet_bsi_itr_8000_train_6.803157_tar_0.828863.pth'
-net.load_state_dict(torch.load(need_ft_model, map_location='cpu'))
+# need_ft_model = './saved_models/basnet_bsi_itr_8000_train_6.803157_tar_0.828863.pth'
+# net.load_state_dict(torch.load(need_ft_model, map_location='cpu'))
 if torch.cuda.is_available():
     net.cuda()
 
