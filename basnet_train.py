@@ -17,7 +17,7 @@ import glob
 from data_loader_custom import SalObjDatasetNew
 
 from torch.utils.tensorboard import SummaryWriter
-
+from torch.autograd import Function
 from model import BASNet
 
 import pytorch_ssim
@@ -40,6 +40,27 @@ def bce_ssim_loss(pred, target):
     return loss
 
 
+class EmbeddingLoss(nn.Module):
+
+    def forward(self, emb, labels_v):
+        eps = 0.000001
+        b, c, h, w = labels_v.size()
+        labels_v = labels_v.view(b, c, h * w)
+        emb = emb.view(b, -1, h * w)
+        fg_emb = torch.sum(emb * labels_v, dim=2) / (torch.sum(labels_v, dim=2) + eps)
+        bg_emb = torch.sum(emb * (1 - labels_v), dim=2) / (torch.sum(1 - labels_v, dim=2) + eps)
+        fg_emb = torch.squeeze(fg_emb)
+        bg_emb = torch.squeeze(bg_emb)
+        fg_emb_mode = torch.sqrt(torch.dot(fg_emb, fg_emb))
+        bg_emb_mode = torch.sqrt(torch.dot(bg_emb, bg_emb))
+        cos_theta = (torch.dot(fg_emb, bg_emb)) / (fg_emb_mode * bg_emb_mode + eps)
+        cos_theta = torch.relu(cos_theta)
+        cos_theta = torch.mean(cos_theta) + eps
+        return cos_theta
+
+
+
+
 def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v):
     loss0 = bce_ssim_loss(d0, labels_v)
     loss1 = bce_ssim_loss(d1, labels_v)
@@ -55,7 +76,7 @@ def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v):
     # loss = torch.pow(torch.mean(torch.abs(labels_v-d0)),2)*(5.0*loss0 + loss1 + loss2 + loss3 + loss4 + loss5) #+ 5.0*lossa
     loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6 + loss7  # + 5.0*lossa
     print("l0: %3f, l1: %3f, l2: %3f, l3: %3f, l4: %3f, l5: %3f, l6: %3f\n" % (
-    loss0.item(), loss1.item(), loss2.item(), loss3.item(), loss4.item(), loss5.item(), loss6.item()))
+        loss0.item(), loss1.item(), loss2.item(), loss3.item(), loss4.item(), loss5.item(), loss6.item()))
     # print("BCE: l1:%3f, l2:%3f, l3:%3f, l4:%3f, l5:%3f, la:%3f, all:%3f\n"%(loss1.data[0],loss2.data[0],loss3.data[0],loss4.data[0],loss5.data[0],lossa.data[0],loss.data[0]))
 
     return loss0, loss
@@ -74,7 +95,7 @@ model_dir = "./saved_models/basnet_bsi_0621/"
 os.makedirs(model_dir, exist_ok=True)
 
 epoch_num = 100000
-batch_size_train = 2
+batch_size_train = 1
 batch_size_val = 1
 train_num = 0
 val_num = 0
@@ -103,7 +124,7 @@ salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuf
 net = BASNet(3, 1)
 
 # fine-tuning
-need_ft_model = './saved_models/basnet_bsi_0618/basnet_bsi_itr_116000_train_6.204402_tar_0.747991.pth'
+need_ft_model = './saved_models/basnet_bsi/basnet_bsi_itr_4000_train_6.843154_tar_0.833489.pth'
 net.load_state_dict(torch.load(need_ft_model, map_location='cpu'))
 if torch.cuda.is_available():
     net.cuda()
@@ -120,6 +141,8 @@ running_tar_loss = 0.0
 ite_num4val = 0
 train_step_one_epoch = train_num // batch_size_train
 writer = SummaryWriter(comment=f'LR_{0.001}_BS_{batch_size_train}')
+embedding_loss = EmbeddingLoss()
+
 for epoch in range(0, epoch_num):
     net.train()
 
@@ -134,18 +157,28 @@ for epoch in range(0, epoch_num):
 
         # wrap them in Variable
         if torch.cuda.is_available():
-            inputs_v, labels_v = Variable(inputs.cuda(), requires_grad=False), Variable(labels.cuda(),
-                                                                                        requires_grad=False)
+            inputs_v = inputs.cuda()
+            labels_v = labels.cuda()
+            # inputs_v, labels_v = Variable(inputs.cuda(), requires_grad=False), Variable(labels.cuda(),
+            #                                                                             requires_grad=False)
         else:
             inputs_v, labels_v = Variable(inputs, requires_grad=False), Variable(labels, requires_grad=False)
         global_step = epoch * train_step_one_epoch + i
         # y zero the parameter gradients
         optimizer.zero_grad()
         # forward + backward + optimize
-        d0, d1, d2, d3, d4, d5, d6, d7 = net(inputs_v)
+        d0, d1, d2, d3, d4, d5, d6, d7, hd1 = net(inputs_v)
         loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
+        emb_loss = embedding_loss(emb=hd1, labels_v=labels_v)
+        b, c, h,  w = labels_v.size()
+        if torch.sum(labels_v.view(b, c, h * w)) > 10000:
+            print("applying")
+            loss_all = loss + emb_loss
+        else:
+            loss_all = loss
 
-        loss.backward()
+        loss_all.backward()
+        nn.utils.clip_grad_norm(net.parameters(), max_norm=2, norm_type=2)
         optimizer.step()
 
         # # print statistics
@@ -160,14 +193,13 @@ for epoch in range(0, epoch_num):
         # del temporary outputs and loss
         del d0, d1, d2, d3, d4, d5, d6, d7, loss2, loss
 
-        print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f " % (
+        print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f emb_loss: %3f" % (
             epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num, running_loss / ite_num4val,
-            running_tar_loss / ite_num4val))
+            running_tar_loss / ite_num4val, emb_loss))
 
-        if ite_num % 2000 == 0:  # save model every 2000 iterations
-
+        if ite_num % 1000 == 0:  # save model every 2000 iterations
             torch.save(net.state_dict(), model_dir + "basnet_bsi_itr_%d_train_%3f_tar_%3f.pth" % (
-            ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
+                ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
             running_loss = 0.0
             running_tar_loss = 0.0
             net.train()  # resume train
