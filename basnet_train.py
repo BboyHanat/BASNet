@@ -49,11 +49,12 @@ class EmbeddingLoss(nn.Module):
         emb = emb.view(b, -1, h * w)
         fg_emb = torch.sum(emb * labels_v, dim=2) / (torch.sum(labels_v, dim=2) + eps)
         bg_emb = torch.sum(emb * (1 - labels_v), dim=2) / (torch.sum(1 - labels_v, dim=2) + eps)
-        fg_emb = torch.squeeze(fg_emb)
-        bg_emb = torch.squeeze(bg_emb)
-        fg_emb_mode = torch.sqrt(torch.bmm(fg_emb, fg_emb))
-        bg_emb_mode = torch.sqrt(torch.bmm(bg_emb, bg_emb))
-        cos_theta = (torch.bmm(fg_emb, bg_emb)) / (fg_emb_mode * bg_emb_mode + eps)
+        # fg_emb = torch.squeeze(fg_emb)
+        # bg_emb = torch.squeeze(bg_emb)
+        fg_emb = torch.per()
+        fg_emb_mode = torch.sqrt(torch.bmm(fg_emb, fg_emb.permute(0, 2, 1)))
+        bg_emb_mode = torch.sqrt(torch.bmm(bg_emb, bg_emb.permute(0, 2, 1)))
+        cos_theta = (torch.bmm(fg_emb, bg_emb.permute(0, 2, 1))) / (fg_emb_mode * bg_emb_mode + eps)
         cos_theta = torch.relu(cos_theta)
         cos_theta = torch.mean(cos_theta) + eps
         return cos_theta
