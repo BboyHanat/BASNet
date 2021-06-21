@@ -95,7 +95,7 @@ model_dir = "./saved_models/basnet_bsi_0621/"
 os.makedirs(model_dir, exist_ok=True)
 
 epoch_num = 100000
-batch_size_train = 1
+batch_size_train = 2
 batch_size_val = 1
 train_num = 0
 val_num = 0
