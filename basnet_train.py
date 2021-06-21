@@ -177,10 +177,11 @@ for epoch in range(0, epoch_num):
         # else:
         #     loss_all = loss
         loss_all = emb_loss
+        print("Embeding Loss: ", loss_all.item())
         loss_all.backward()
         nn.utils.clip_grad_norm(net.parameters(), max_norm=2, norm_type=2)
         optimizer.step()
-        print("Embeding Loss: ", loss_all)
+
 
         # # # print statistics
         # running_loss += loss.item()
