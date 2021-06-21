@@ -40,25 +40,6 @@ def bce_ssim_loss(pred, target):
     return loss
 
 
-class EmbeddingLoss(nn.Module):
-
-    def forward(self, emb, labels_v):
-        eps = 0.000001
-        b, c, h, w = labels_v.size()
-        labels_v = labels_v.view(b, c, h * w)
-        emb = emb.view(b, -1, h * w)
-        fg_emb = torch.sum(emb * labels_v, dim=2) / (torch.sum(labels_v, dim=2) + eps)
-        bg_emb = torch.sum(emb * (1 - labels_v), dim=2) / (torch.sum(1 - labels_v, dim=2) + eps)
-        fg_emb_mode = torch.sqrt(torch.bmm(fg_emb.unsqueeze(dim=1), fg_emb.unsqueeze(dim=2)))
-        bg_emb_mode = torch.sqrt(torch.bmm(bg_emb.unsqueeze(dim=1), bg_emb.unsqueeze(dim=2)))
-        cos_theta = (torch.bmm(fg_emb.unsqueeze(dim=1), bg_emb.unsqueeze(dim=2))) / (fg_emb_mode * bg_emb_mode + eps)
-        cos_theta = torch.relu(cos_theta)
-        cos_theta = torch.mean(cos_theta) + eps
-        return cos_theta
-
-
-
-
 def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v):
     loss0 = bce_ssim_loss(d0, labels_v)
     loss1 = bce_ssim_loss(d1, labels_v)
@@ -152,43 +133,26 @@ for epoch in range(0, epoch_num):
 
         inputs = inputs.type(torch.FloatTensor)
         labels = labels.type(torch.FloatTensor)
-        print("OKokokokoko")
         # wrap them in Variable
         if torch.cuda.is_available():
-            print("OKokokokoko")
-            inputs_v = inputs.cuda()
-            inputs_v.requires_grad_(False)
-            labels_v = labels.cuda()
-            labels_v.requires_grad_(False)
-            # inputs_v, labels_v = Variable(inputs.cuda(), requires_grad=False), Variable(labels.cuda(),
-            #                                                                             requires_grad=False)
+            inputs_v, labels_v = Variable(inputs.cuda(), requires_grad=False), Variable(labels.cuda(),
+                                                                                        requires_grad=False)
         else:
             inputs_v, labels_v = Variable(inputs, requires_grad=False), Variable(labels, requires_grad=False)
         global_step = epoch * train_step_one_epoch + i
         # y zero the parameter gradients
-        print("kkkkkkkkkkkkkkkkkkkkkkkkk")
         optimizer.zero_grad()
         # forward + backward + optimize
-        d0, d1, d2, d3, d4, d5, d6, d7, hd1 = net(inputs_v)
-        # loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
-        emb_loss = embedding_loss(emb=hd1, labels_v=labels_v)
-        b, c, h,  w = labels_v.size()
-        # if torch.sum(labels_v.view(b, c, h * w)) > 10000:
-        #     print("applying")
-        #     loss_all = loss + emb_loss
-        # else:
-        #     loss_all = loss
-        loss_all = emb_loss
-        print("ite_num is: ", ite_num)
-        print("Embeding Loss: ", loss_all.item())
-        loss_all.backward()
-        nn.utils.clip_grad_norm(net.parameters(), max_norm=2, norm_type=2)
+        d0, d1, d2, d3, d4, d5, d6, d7 = net(inputs_v)
+        loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
+
+        loss.backward()
+        # nn.utils.clip_grad_norm(net.parameters(), max_norm=2, norm_type=2)
         optimizer.step()
 
-
-        # # # print statistics
-        # running_loss += loss.item()
-        # running_tar_loss += loss2.item()
+        # # print statistics
+        running_loss += loss.item()
+        running_tar_loss += loss2.item()
 
         writer.add_images('images', inputs, global_step)
         writer.add_images('masks/true', labels, global_step)
@@ -196,11 +160,11 @@ for epoch in range(0, epoch_num):
         writer.add_images('masks/pred_d1', torch.sigmoid(d1), global_step)
         writer.add_images('masks/pred_d2', torch.sigmoid(d2), global_step)
         # del temporary outputs and loss
-        # del d0, d1, d2, d3, d4, d5, d6, d7, loss2, loss
+        del d0, d1, d2, d3, d4, d5, d6, d7, loss2, loss
 
-        # print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f emb_loss: %3f" % (
-        #     epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num, running_loss / ite_num4val,
-        #     running_tar_loss / ite_num4val, emb_loss))
+        print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f" % (
+            epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num, running_loss / ite_num4val,
+            running_tar_loss / ite_num4val))
 
         if ite_num % 1000 == 0:  # save model every 2000 iterations
             torch.save(net.state_dict(), model_dir + "basnet_bsi_itr_%d_train_%3f_tar_%3f.pth" % (
