@@ -120,7 +120,6 @@ running_tar_loss = 0.0
 ite_num4val = 0
 train_step_one_epoch = train_num // batch_size_train
 writer = SummaryWriter(comment=f'LR_{0.001}_BS_{batch_size_train}')
-embedding_loss = EmbeddingLoss()
 
 for epoch in range(0, epoch_num):
     net.train()
