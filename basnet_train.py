@@ -51,8 +51,8 @@ class EmbeddingLoss(nn.Module):
         bg_emb = torch.sum(emb * (1 - labels_v), dim=2) / (torch.sum(1 - labels_v, dim=2) + eps)
         fg_emb = torch.squeeze(fg_emb)
         bg_emb = torch.squeeze(bg_emb)
-        fg_emb_mode = torch.sqrt(torch.dot(fg_emb, fg_emb))
-        bg_emb_mode = torch.sqrt(torch.dot(bg_emb, bg_emb))
+        fg_emb_mode = torch.sqrt(torch.bmm(fg_emb, fg_emb))
+        bg_emb_mode = torch.sqrt(torch.bmm(bg_emb, bg_emb))
         cos_theta = (torch.bmm(fg_emb, bg_emb)) / (fg_emb_mode * bg_emb_mode + eps)
         cos_theta = torch.relu(cos_theta)
         cos_theta = torch.mean(cos_theta) + eps
