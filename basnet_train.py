@@ -115,7 +115,7 @@ train_num = len(tra_img_name_list)
 
 salobj_dataset = SalObjDatasetNew(tra_img_name_list, tra_lbl_name_list, size_wh=(1024, 512))
 
-salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuffle=True, num_workers=4)
+salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuffle=True, num_workers=3)
 
 # ------- 3. define model --------
 # define the net
