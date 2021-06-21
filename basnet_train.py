@@ -156,7 +156,9 @@ for epoch in range(0, epoch_num):
         # wrap them in Variable
         if torch.cuda.is_available():
             inputs_v = inputs.cuda()
+            inputs_v.requires_grad_(False)
             labels_v = labels.cuda()
+            labels_v.requires_grad_(False)
             # inputs_v, labels_v = Variable(inputs.cuda(), requires_grad=False), Variable(labels.cuda(),
             #                                                                             requires_grad=False)
         else:
@@ -166,7 +168,7 @@ for epoch in range(0, epoch_num):
         optimizer.zero_grad()
         # forward + backward + optimize
         d0, d1, d2, d3, d4, d5, d6, d7, hd1 = net(inputs_v)
-        loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
+        # loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, d7, labels_v)
         emb_loss = embedding_loss(emb=hd1, labels_v=labels_v)
         b, c, h,  w = labels_v.size()
         # if torch.sum(labels_v.view(b, c, h * w)) > 10000:
@@ -178,10 +180,11 @@ for epoch in range(0, epoch_num):
         loss_all.backward()
         nn.utils.clip_grad_norm(net.parameters(), max_norm=2, norm_type=2)
         optimizer.step()
+        print("Embeding Loss: ", loss_all)
 
-        # # print statistics
-        running_loss += loss.item()
-        running_tar_loss += loss2.item()
+        # # # print statistics
+        # running_loss += loss.item()
+        # running_tar_loss += loss2.item()
 
         writer.add_images('images', inputs, global_step)
         writer.add_images('masks/true', labels, global_step)
@@ -189,11 +192,11 @@ for epoch in range(0, epoch_num):
         writer.add_images('masks/pred_d1', torch.sigmoid(d1), global_step)
         writer.add_images('masks/pred_d2', torch.sigmoid(d2), global_step)
         # del temporary outputs and loss
-        del d0, d1, d2, d3, d4, d5, d6, d7, loss2, loss
+        # del d0, d1, d2, d3, d4, d5, d6, d7, loss2, loss
 
-        print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f emb_loss: %3f" % (
-            epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num, running_loss / ite_num4val,
-            running_tar_loss / ite_num4val, emb_loss))
+        # print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f emb_loss: %3f" % (
+        #     epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num, running_loss / ite_num4val,
+        #     running_tar_loss / ite_num4val, emb_loss))
 
         if ite_num % 1000 == 0:  # save model every 2000 iterations
             torch.save(net.state_dict(), model_dir + "basnet_bsi_itr_%d_train_%3f_tar_%3f.pth" % (
