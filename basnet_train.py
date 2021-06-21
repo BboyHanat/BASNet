@@ -143,7 +143,7 @@ embedding_loss = EmbeddingLoss()
 
 for epoch in range(0, epoch_num):
     net.train()
-
+    print("epoch {}".format(epoch))
     for i, data in enumerate(salobj_dataloader):
         ite_num = ite_num + 1
         ite_num4val = ite_num4val + 1
