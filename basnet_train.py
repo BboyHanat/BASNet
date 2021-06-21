@@ -152,9 +152,10 @@ for epoch in range(0, epoch_num):
 
         inputs = inputs.type(torch.FloatTensor)
         labels = labels.type(torch.FloatTensor)
-
+        print("OKokokokoko")
         # wrap them in Variable
         if torch.cuda.is_available():
+            print("OKokokokoko")
             inputs_v = inputs.cuda()
             inputs_v.requires_grad_(False)
             labels_v = labels.cuda()
@@ -165,6 +166,7 @@ for epoch in range(0, epoch_num):
             inputs_v, labels_v = Variable(inputs, requires_grad=False), Variable(labels, requires_grad=False)
         global_step = epoch * train_step_one_epoch + i
         # y zero the parameter gradients
+        print("kkkkkkkkkkkkkkkkkkkkkkkkk")
         optimizer.zero_grad()
         # forward + backward + optimize
         d0, d1, d2, d3, d4, d5, d6, d7, hd1 = net(inputs_v)
