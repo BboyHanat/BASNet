@@ -70,7 +70,7 @@ tra_label_dir = 'annotations/training/'
 image_ext = '.jpg'
 label_ext = '.png'
 
-model_dir = "./saved_models/basnet_bsi_0618/"
+model_dir = "./saved_models/basnet_bsi_0621/"
 os.makedirs(model_dir, exist_ok=True)
 
 epoch_num = 100000
@@ -103,14 +103,14 @@ salobj_dataloader = DataLoader(salobj_dataset, batch_size=batch_size_train, shuf
 net = BASNet(3, 1)
 
 # fine-tuning
-need_ft_model = './saved_models/basnet_bsi/basnet_bsi_itr_24000_train_5.146515_tar_0.597883.pth'
+need_ft_model = './saved_models/basnet_bsi_0618/basnet_bsi_itr_116000_train_6.204402_tar_0.747991.pth'
 net.load_state_dict(torch.load(need_ft_model, map_location='cpu'))
 if torch.cuda.is_available():
     net.cuda()
 
 # ------- 4. define optimizer --------
 print("---define optimizer...")
-optimizer = optim.Adam(net.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+optimizer = optim.Adam(net.parameters(), lr=0.00001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
 
 # ------- 5. training process --------
 print("---start training...")
